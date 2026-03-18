@@ -5,13 +5,14 @@ namespace App\Http\Controllers;
 
 use App\Models\Car;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 
 class CarController extends Controller
 {
     // Stap 1: Kenteken invoeren
     public function showKentekenForm()
     {
-        return view('cars.kenteken'); // Zorg ervoor dat de juiste map wordt gebruikt
+        return view('cars.kenteken');
     }
 
     // Stap 2: Controleer het kenteken en haal auto-informatie op
@@ -23,7 +24,7 @@ class CarController extends Controller
 
         $licensePlate = $request->license_plate;
 
-        // Haal de auto-gegevens op op basis van het kenteken
+        // Haal de auto-gegevens op via je eigen logica
         $carData = $this->getCarDataFromLicense($licensePlate);
 
         // Sla de auto-gegevens op in de sessie
@@ -45,37 +46,44 @@ class CarController extends Controller
         return view('cars.gegevens', compact('carData'));
     }
 
-    // Stap 4: Auto opslaan
+    // Stap 4: Auto opslaan (met foto uploaden)
     public function opslaanAuto(Request $request)
-{
-    // Controleer of de gebruiker is ingelogd
-    if (!auth()->check()) {
-        return redirect()->route('login')->with('error', 'Je moet ingelogd zijn om een auto aan te bieden.');
+    {
+        // Controleer of de gebruiker is ingelogd
+        if (!auth()->check()) {
+            return redirect()->route('login')->with('error', 'Je moet ingelogd zijn om een auto aan te bieden.');
+        }
+
+        // Valideer de invoer, inclusief de foto
+        $request->validate([
+            'license_plate' => 'required|unique:cars,license_plate',
+            'brand' => 'required|string',
+            'model' => 'required|string',
+            'year' => 'required|digits:4|integer',
+            'price' => 'required|numeric',
+            'photo' => 'nullable|image|mimes:jpeg,png,jpg,gif,svg|max:2048', // Validatie voor de foto
+        ]);
+
+        // Haal alleen de velden op die je wilt massaal toewijzen
+        $carData = $request->only(['license_plate', 'brand', 'model', 'year', 'price']);
+
+        // Voeg user_id toe aan de gegevens van de auto
+        $carData['user_id'] = auth()->id();
+
+        // Verwerk de foto als deze is geüpload
+        if ($request->hasFile('photo')) {
+            // Sla de foto op in de public opslag en sla het pad op in de database
+            $carData['photo'] = $request->file('photo')->store('cars', 'public');
+        }
+
+        // Sla de auto op in de database
+        Car::create($carData);
+
+        // Redirect naar de "Mijn aanbod" pagina met een succesmelding
+        return redirect()->route('cars.mijn_aanbod')->with('success', 'Auto succesvol aangeboden!');
     }
 
-    // Valideer de invoer
-    $request->validate([
-        'license_plate' => 'required|unique:cars,license_plate',
-        'brand' => 'required|string',
-        'model' => 'required|string',
-        'year' => 'required|digits:4|integer',
-        'price' => 'required|numeric',
-    ]);
-
-    // Haal alleen de velden op die je wilt massaal toewijzen
-    $carData = $request->only(['license_plate', 'brand', 'model', 'year', 'price']);
-
-    // Voeg user_id toe aan de gegevens van de auto
-    $carData['user_id'] = auth()->id();
-
-    // Sla de auto op in de database
-    Car::create($carData);
-
-    // Redirect naar de "Mijn aanbod" pagina met een succesmelding
-    return redirect()->route('cars.mijn_aanbod')->with('success', 'Auto succesvol aangeboden!');
-}
-
-    // Functie om auto-gegevens op te halen op basis van het kenteken
+    // Functie om auto-gegevens op te halen (bijv. via een API)
     private function getCarDataFromLicense($licensePlate)
     {
         return [
