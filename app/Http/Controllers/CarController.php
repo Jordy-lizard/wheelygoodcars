@@ -1,6 +1,5 @@
 <?php
 
-
 namespace App\Http\Controllers;
 
 use App\Models\Car;
@@ -103,44 +102,58 @@ class CarController extends Controller
         return view('cars.mijn_aanbod', compact('cars'));
     }
 
+    // Toon het totale aanbod voor iedereen (ook niet-ingelogd)
+    public function index()
+    {
+        $cars = Car::where('status', 'te koop')->get(); // Alleen auto's die te koop staan
+        return view('cars.index', compact('cars'));
+    }
+
+    // Toon de details van een specifieke auto
+    public function show($id)
+    {
+        $car = Car::findOrFail($id);
+        return view('cars.show', compact('car'));
+    }
+
     // Stap 6: Auto bewerken
     public function edit($id)
-{
-    // Haal de auto op die bewerkt moet worden
-    $car = Car::findOrFail($id);
+    {
+        // Haal de auto op die bewerkt moet worden
+        $car = Car::findOrFail($id);
 
-    // Controleer of de ingelogde gebruiker de eigenaar van de auto is
-    if ($car->user_id !== auth()->id()) {
-        return redirect()->route('cars.mijn_aanbod')->with('error', 'Je hebt geen toestemming om deze auto te bewerken.');
+        // Controleer of de ingelogde gebruiker de eigenaar van de auto is
+        if ($car->user_id !== auth()->id()) {
+            return redirect()->route('cars.mijn_aanbod')->with('error', 'Je hebt geen toestemming om deze auto te bewerken.');
+        }
+
+        // Toon de bewerkpagina
+        return view('cars.edit', compact('car'));
     }
 
-    // Toon de bewerkpagina
-    return view('cars.edit', compact('car'));
-}
+    public function update(Request $request, $id)
+    {
+        // Valideer de prijs invoer
+        $request->validate([
+            'price' => 'required|numeric',
+        ]);
 
-public function update(Request $request, $id)
-{
-    // Valideer de prijs invoer
-    $request->validate([
-        'price' => 'required|numeric',
-    ]);
+        // Haal de auto op
+        $car = Car::findOrFail($id);
 
-    // Haal de auto op
-    $car = Car::findOrFail($id);
+        // Controleer of de ingelogde gebruiker de eigenaar van de auto is
+        if ($car->user_id !== auth()->id()) {
+            return redirect()->route('cars.mijn_aanbod')->with('error', 'Je hebt geen toestemming om deze auto bij te werken.');
+        }
 
-    // Controleer of de ingelogde gebruiker de eigenaar van de auto is
-    if ($car->user_id !== auth()->id()) {
-        return redirect()->route('cars.mijn_aanbod')->with('error', 'Je hebt geen toestemming om deze auto bij te werken.');
+        // Werk de prijs bij
+        $car->update([
+            'price' => $request->input('price'),
+        ]);
+
+        // Redirect naar "Mijn aanbod" met een succesmelding
+        return redirect()->route('cars.mijn_aanbod')->with('success', 'Auto succesvol bijgewerkt!');
     }
-
-    // Werk de prijs bij
-    $car->update([
-        'price' => $request->input('price'),
-    ]);
-
-    // Redirect naar "Mijn aanbod" met een succesmelding
-    return redirect()->route('cars.mijn_aanbod')->with('success', 'Auto succesvol bijgewerkt!');
-}
 
     // Stap 8: Auto verwijderen
     public function destroy($id)
