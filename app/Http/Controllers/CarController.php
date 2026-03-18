@@ -1,5 +1,4 @@
 <?php
-
 namespace App\Http\Controllers;
 
 use App\Models\Car;
@@ -105,7 +104,7 @@ class CarController extends Controller
     // Toon het totale aanbod voor iedereen (ook niet-ingelogd)
     public function index()
     {
-        $cars = Car::where('status', 'te koop')->get(); // Alleen auto's die te koop staan
+        $cars = Car::all(); // Geen filter op status, alle auto's ophalen
         return view('cars.index', compact('cars'));
     }
 
