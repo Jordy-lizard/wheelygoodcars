@@ -16,19 +16,19 @@
                 <div class="collapse navbar-collapse justify-content-between" id="navbarNav">
                     <ul class="navbar-nav">
                         <li class="nav-item"><a class="nav-link text-light" href="">Alle auto's</a></li>
-                            @auth
-                                <li class="nav-item"><a class="nav-link text-light" href="">Mijn aanbod</a></li>
-                                <li class="nav-item"><a class="nav-link text-light" href="">Aanbod plaatsen</a></li>
-                            @endauth
-                        </li>
+                        @auth
+                            <li class="nav-item"><a class="nav-link text-light" href="">Mijn aanbod</a></li>
+                            <!-- De aangepaste link naar de auto-aanbieding pagina -->
+                            <li class="nav-item"><a class="nav-link text-light" href="{{ route('cars.kenteken') }}">Aanbod plaatsen</a></li> <!-- Wijziging hier -->
+                        @endauth
                     </ul>
                     <ul class="navbar-nav">
                         @guest
-                            <li class="nav-item"><a class="nav-link text-secondary"   href="{{ route('register') }}">Registreren</a></li>
+                            <li class="nav-item"><a class="nav-link text-secondary" href="{{ route('register') }}">Registreren</a></li>
                             <li class="nav-item"><a class="nav-link text-secondary" href="{{ route('login') }}">Inloggen</a></li>
                         @endguest
                         @auth
-                            <li class="nav-item"><a class="nav-link text-secondary"   href="{{ route('logout') }}">Uitloggen</a></li>
+                            <li class="nav-item"><a class="nav-link text-secondary" href="{{ route('logout') }}">Uitloggen</a></li>
                         @endauth
                     </ul>
                 </div>

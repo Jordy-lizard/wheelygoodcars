@@ -1,24 +1,14 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider and all of them will
-| be assigned to the "web" middleware group. Make something great!
-|
-*/
+use App\Http\Controllers\CarController;
 
 Route::get('/', function () {
     return view('welcome');
 })->name('home');
 
-Route::middleware('auth')->group(function () {
-    //
-});
-
+Route::get('/auto-aanbieden/kenteken', [CarController::class, 'showKentekenForm'])->name('cars.kenteken');
+Route::post('/auto-aanbieden/check-kenteken', [CarController::class, 'checkKenteken'])->name('cars.checkKenteken');
+Route::get('/auto-aanbieden/gegevens-invullen', [CarController::class, 'showGegevensForm'])->name('cars.gegevens');
+Route::post('/auto-aanbieden/opslag', [CarController::class, 'opslaanAuto'])->name('cars.opslaan');
 require __DIR__.'/auth.php';
