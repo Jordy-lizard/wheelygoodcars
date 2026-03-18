@@ -18,6 +18,8 @@
                     <div class="car-info">
                         <h3>{{ $car->brand }} {{ $car->model }}</h3>
                         <p><strong>Prijs:</strong> €{{ number_format($car->price, 2) }}</p>
+                        <!-- Voeg de Bekijk knop toe -->
+                        <a href="{{ route('cars.show', $car->id) }}" class="btn btn-primary">Bekijk auto</a>
                     </div>
                 </div>
             @endforeach
@@ -66,6 +68,21 @@
         .car-info h3 {
             font-size: 1.2rem;
             margin-bottom: 5px;
+        }
+
+        .btn-primary {
+            margin-top: 10px;
+            background-color: #007bff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            color: white;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary:hover {
+            background-color: #0056b3;
         }
     </style>
 
