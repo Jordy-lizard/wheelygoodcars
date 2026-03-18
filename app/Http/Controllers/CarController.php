@@ -1,5 +1,6 @@
 <?php
 
+
 namespace App\Http\Controllers;
 
 use App\Models\Car;
@@ -29,7 +30,7 @@ class CarController extends Controller
         session(['car_data' => $carData]);
 
         // Redirect naar de volgende stap (gegevens invullen)
-        return redirect()->route('cars.gegevens'); // Dit moet 'cars.gegevens' zijn
+        return redirect()->route('cars.gegevens');
     }
 
     // Stap 3: Gegevens invullen (merk, model, bouwjaar, prijs)
@@ -38,32 +39,41 @@ class CarController extends Controller
         $carData = session('car_data'); // Haal de car_data uit de sessie
 
         if (!$carData) {
-            return redirect()->route('cars.kenteken'); // Dit moet 'cars.kenteken' zijn
+            return redirect()->route('cars.kenteken'); // Redirect naar kenteken als car_data niet gevonden is
         }
 
-        return view('cars.gegevens', compact('carData')); // Verwijst naar 'resources/views/cars/gegevens.blade.php'
+        return view('cars.gegevens', compact('carData'));
     }
 
     // Stap 4: Auto opslaan
     public function opslaanAuto(Request $request)
-    {
-        $request->validate([
-            'license_plate' => 'required|unique:cars,license_plate',
-            'brand' => 'required|string',
-            'model' => 'required|string',
-            'year' => 'required|digits:4|integer',
-            'price' => 'required|numeric',
-        ]);
-
-        // Haal alleen de velden op die je wilt massaal toewijzen
-        $carData = $request->only(['license_plate', 'brand', 'model', 'year', 'price']);
-
-        // Sla de auto op in de database
-        Car::create($carData);
-
-        // Redirect naar de kenteken pagina met een succesmelding
-        return redirect()->route('cars.kenteken')->with('success', 'Auto succesvol aangeboden!');
+{
+    // Controleer of de gebruiker is ingelogd
+    if (!auth()->check()) {
+        return redirect()->route('login')->with('error', 'Je moet ingelogd zijn om een auto aan te bieden.');
     }
+
+    // Valideer de invoer
+    $request->validate([
+        'license_plate' => 'required|unique:cars,license_plate',
+        'brand' => 'required|string',
+        'model' => 'required|string',
+        'year' => 'required|digits:4|integer',
+        'price' => 'required|numeric',
+    ]);
+
+    // Haal alleen de velden op die je wilt massaal toewijzen
+    $carData = $request->only(['license_plate', 'brand', 'model', 'year', 'price']);
+
+    // Voeg user_id toe aan de gegevens van de auto
+    $carData['user_id'] = auth()->id();
+
+    // Sla de auto op in de database
+    Car::create($carData);
+
+    // Redirect naar de "Mijn aanbod" pagina met een succesmelding
+    return redirect()->route('cars.mijn_aanbod')->with('success', 'Auto succesvol aangeboden!');
+}
 
     // Functie om auto-gegevens op te halen op basis van het kenteken
     private function getCarDataFromLicense($licensePlate)
@@ -74,5 +84,66 @@ class CarController extends Controller
             'model' => 'Corolla',
             'year' => 2019,
         ];
+    }
+
+    // Stap 5: Toon het overzicht van auto's (Mijn Aanbod)
+    public function mijnAanbod()
+    {
+        // Haal alle auto's op die de ingelogde gebruiker heeft aangeboden
+        $cars = Car::where('user_id', auth()->id())->get();
+
+        return view('cars.mijn_aanbod', compact('cars'));
+    }
+
+    // Stap 6: Auto bewerken
+    public function edit($id)
+    {
+        $car = Car::findOrFail($id);
+
+        // Controleer of de auto van de ingelogde gebruiker is
+        if ($car->user_id !== auth()->id()) {
+            return redirect()->route('cars.mijn_aanbod')->with('error', 'Je hebt geen toestemming om deze auto te bewerken.');
+        }
+
+        return view('cars.edit', compact('car'));
+    }
+
+    // Stap 7: Auto bijwerken
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'brand' => 'required|string',
+            'model' => 'required|string',
+            'year' => 'required|digits:4|integer',
+            'price' => 'required|numeric',
+        ]);
+
+        $car = Car::findOrFail($id);
+
+        // Controleer of de auto van de ingelogde gebruiker is
+        if ($car->user_id !== auth()->id()) {
+            return redirect()->route('cars.mijn_aanbod')->with('error', 'Je hebt geen toestemming om deze auto bij te werken.');
+        }
+
+        // Werk de gegevens bij
+        $car->update($request->only(['brand', 'model', 'year', 'price']));
+
+        return redirect()->route('cars.mijn_aanbod')->with('success', 'Auto succesvol bijgewerkt!');
+    }
+
+    // Stap 8: Auto verwijderen
+    public function destroy($id)
+    {
+        $car = Car::findOrFail($id);
+
+        // Controleer of de auto van de ingelogde gebruiker is
+        if ($car->user_id !== auth()->id()) {
+            return redirect()->route('cars.mijn_aanbod')->with('error', 'Je hebt geen toestemming om deze auto te verwijderen.');
+        }
+
+        // Verwijder de auto
+        $car->delete();
+
+        return redirect()->route('cars.mijn_aanbod')->with('success', 'Auto succesvol verwijderd!');
     }
 }

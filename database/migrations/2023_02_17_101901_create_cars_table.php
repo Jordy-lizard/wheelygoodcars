@@ -14,6 +14,8 @@ return new class extends Migration {
             $table->string('model')->nullable();
             $table->year('year')->nullable();
             $table->decimal('price', 10, 2)->nullable();
+            $table->unsignedBigInteger('user_id');  // Voeg de user_id kolom toe
+            $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');  // Voeg een foreign key constraint toe
             $table->timestamps();
         });
     }
