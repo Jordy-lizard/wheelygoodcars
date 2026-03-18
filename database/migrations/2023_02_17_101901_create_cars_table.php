@@ -17,9 +17,11 @@ return new class extends Migration {
             $table->unsignedBigInteger('user_id');
             $table->foreign('user_id')->references('id')->on('users')->onDelete('cascade');
             $table->string('photo')->nullable();
+            $table->integer('views')->default(0);
             $table->timestamps();
         });
     }
+
     public function down(): void
     {
         Schema::dropIfExists('cars');
